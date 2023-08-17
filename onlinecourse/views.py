@@ -101,6 +101,7 @@ def enroll(request, course_id):
     return HttpResponseRedirect(reverse(viewname='onlinecourse:course_details', args=(course.id,)))
 
     # <HINT> A example method to collect the selected choices from the exam form from the request object
+
 def extract_answers(request):
    submitted_anwsers = []
    for key in request.POST:
@@ -123,11 +124,10 @@ def submit(request, course_id):
     # Collect the selected choices from exam form
     answers = extract_answers(request)
     # Add each selected choice object to the submission object
-    Submission_choices.objects.create(submission_id=submission)
-    submission_choices = Submission_choices.objects.get(submission_id=submission)
-    submission_choices.choice_id.set(answers)
+    submission_choices = Submission_choices(submission_id=submission)
     submission_choices.save()
-    logger.error(submission_choices)
+    submission_choices.choice_id.set(answers)
+    # logger.error(submission_choices.choice_id.all())
     # Redirect to show_exam_result with the submission id
     return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course.id, submission_choices.id,)))
 
@@ -143,11 +143,21 @@ def show_exam_result(request, course_id, submission_choices_id):
     course = get_object_or_404(Course, pk=course_id)
     # Get the selected choice ids from the submission record
     submission_choices = get_object_or_404(Submission_choices, pk=submission_choices_id)
-    # logger.error(submission_choices.choice_id)
+    logger.error(submission_choices.choice_id.all())
     # For each selected choice, check if it is a correct answer or not
-    for choice in submission_choices.choice_id:
-        logger.error(choice)
-        # is_correct = Choice.objects.filter(id=choice).is_correct
+    total_score = 0
+    for submission in submission_choices.choice_id.all():
+        choices = get_object_or_404(Choice, pk=submission.id)
+        is_correct = choices.is_correct
+        # logger.error(is_correct)
+        for question in choices.question_id.all():
+            # logger.error(question.grade)
+            grade = question.grade
+            if is_correct:
+                total_score = total_score + grade
+        logger.error(total_score)
+        # question = Question.objects.filter(id=question_id)
+        # logger.error(filteredObject.all().get(is_correct=True))
     # Calculate the total score
     return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(submission_choices.id,)))
 
