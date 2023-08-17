@@ -127,39 +127,30 @@ def submit(request, course_id):
     submission_choices = Submission_choices(submission_id=submission)
     submission_choices.save()
     submission_choices.choice_id.set(answers)
-    # logger.error(submission_choices.choice_id.all())
     # Redirect to show_exam_result with the submission id
     return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course.id, submission_choices.id,)))
-
-
-
-
-
 
 # <HINT> Create an exam result view to check if learner passed exam and show their question results and result for each question,
 # you may implement it based on the following logic:
 def show_exam_result(request, course_id, submission_choices_id):
+    context = {}
     # Get course and submission based on their ids
     course = get_object_or_404(Course, pk=course_id)
     # Get the selected choice ids from the submission record
-    submission_choices = get_object_or_404(Submission_choices, pk=submission_choices_id)
-    logger.error(submission_choices.choice_id.all())
+    selected_ids = get_object_or_404(Submission_choices, pk=submission_choices_id)
     # For each selected choice, check if it is a correct answer or not
     total_score = 0
-    for submission in submission_choices.choice_id.all():
+    for submission in selected_ids.choice_id.all():
         choices = get_object_or_404(Choice, pk=submission.id)
         is_correct = choices.is_correct
-        # logger.error(is_correct)
         for question in choices.question_id.all():
-            # logger.error(question.grade)
             grade = question.grade
             if is_correct:
                 total_score = total_score + grade
-        logger.error(total_score)
-        # question = Question.objects.filter(id=question_id)
-        # logger.error(filteredObject.all().get(is_correct=True))
     # Calculate the total score
-    return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(submission_choices.id,)))
-
+    context['course'] = course
+    context['selected_ids'] = selected_ids.choice_id.all()
+    context['grade'] = total_score
+    return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
 
