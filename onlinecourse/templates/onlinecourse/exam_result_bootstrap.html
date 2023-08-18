@@ -49,18 +49,26 @@
         <div class="card-columns-vertical mt-1">
         <h5 class="">Exam results</h5>
             <!--HINT Display exam results-->
-            {% for question in course.question_set.all %}
+            {% for question in questions %}
                 <div class="card mt-1">
                     <div class="card-header"><h5>{{ question.question_text }}</h5></div>
                     <div class="form-group p-3">
-                        {% for choice in question.choice_set.all %}
-                            {% if choice.is_correct %}
-                                <div class="text-success">Correct answer: {{ choice.choice_text }}</div>
-                            {% else %}
-                            <div>{{ choice.choice_text }}</div>
-                            {% endif %}
+                        
+                        {% for query in choices %}
+                            {% for choice in query %}
+                                {% for selection in selected_ids %}
+                                    {% if selection.question_id.id == choice.question_id.id and choice.question_id.id == question.id %}
+                                        {% if choice.is_correct and selection.is_correct %}
+                                            <div class="text-success">You were correct!: {{ choice.choice_text }}</div>
+                                        {% elif choice.is_correct and not selection.is_correct %}
+                                            <div class="text-danger">You were not correct: {{ choice.choice_text }}</div>
+                                        {% else %}
+                                            <div>{{ choice.choice_text }}</div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
                         {% endfor %}
-                    </div>
                 </div>
             {% endfor %}
         </div>
